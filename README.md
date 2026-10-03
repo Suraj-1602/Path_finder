@@ -1,5 +1,11 @@
 # PathFinder — Traffic Routing Visualization
 
+<p align="center">
+  <a href="https://YOUR-VERCEL-URL">
+    <img src="https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel" alt="Live Demo">
+  </a>
+</p>
+
 An interactive web application for visualizing pathfinding algorithms in a smart-city traffic routing context. Draw walls, add traffic weights, and watch algorithms explore the grid in real time.
 
 ## Features
