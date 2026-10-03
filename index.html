@@ -5,24 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PathFinder — Traffic Routing Visualization</title>
     <meta name="description" content="Interactive visualization of pathfinding algorithms for smart city traffic routing. Compare A*, Dijkstra, BFS, Greedy Best-First and solve routing matrices.">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <a class="skip-link" href="#grid">Skip to grid</a>
 
     <!-- ===================== HEADER ===================== -->
     <header id="app-header">
         <div class="header-left">
+            <button type="button" id="btn-sidebar" class="btn btn-icon-only" aria-label="Toggle tools sidebar" aria-controls="sidebar" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
             <div class="logo">
-                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                </svg>
+                <span class="logo-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                </span>
                 <div class="logo-text">
                     <h1>PathFinder</h1>
-                    <span class="tagline">Traffic Routing Visualization</span>
+                    <span class="tagline">Smart-city traffic routing</span>
                 </div>
             </div>
+            <span class="product-badge">Visualizer</span>
         </div>
 
         <div class="header-center">
@@ -36,104 +45,133 @@
                         <option value="greedy">Greedy Best-First</option>
                         <option value="bidirectional">Bidirectional BFS</option>
                     </select>
-                    <svg class="select-arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                    <svg class="select-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                 </div>
             </div>
 
-            <div class="control-group">
-                <label for="speed-slider">Speed</label>
+            <div class="control-group speed-group">
+                <label for="speed-slider">Animation speed</label>
                 <div class="speed-control">
                     <span class="speed-label">Slow</span>
-                    <input type="range" id="speed-slider" min="1" max="100" value="60">
+                    <input type="range" id="speed-slider" min="1" max="100" value="60" aria-valuemin="1" aria-valuemax="100">
                     <span class="speed-label">Fast</span>
                 </div>
             </div>
 
-            <div class="control-group">
-                <label>
-                    <input type="checkbox" id="diagonal-toggle"> Allow Diagonals
-                </label>
-            </div>
+            <label class="toggle-control" for="diagonal-toggle">
+                <input type="checkbox" id="diagonal-toggle">
+                <span class="toggle-track" aria-hidden="true"></span>
+                <span>Allow diagonals</span>
+            </label>
         </div>
 
         <div class="header-right">
-            <button id="btn-visualize" class="btn btn-primary">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Visualize
+            <button type="button" id="btn-visualize" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span class="btn-label">Visualize</span>
             </button>
-            <button id="btn-compare" class="btn btn-secondary">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-                Compare All
+            <button type="button" id="btn-compare" class="btn btn-secondary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                <span class="btn-label">Compare All</span>
             </button>
 
             <div class="btn-group">
-                <button id="btn-maze" class="btn btn-ghost" title="Generate Maze">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18M15 9v12M9 15h12"/></svg>
-                    Maze
+                <button type="button" id="btn-maze" class="btn btn-ghost" title="Generate Maze" aria-haspopup="true" aria-expanded="false" aria-controls="maze-dropdown">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18M15 9v12M9 15h12"/></svg>
+                    <span class="btn-label">Maze</span>
                 </button>
-                <div id="maze-dropdown" class="dropdown hidden">
-                    <button data-maze="recursive">Recursive Division</button>
-                    <button data-maze="random-walls">Random Walls</button>
-                    <button data-maze="random-weights">Random Traffic</button>
-                    <button data-maze="staircase">Staircase Pattern</button>
+                <div id="maze-dropdown" class="dropdown hidden" role="menu">
+                    <button type="button" data-maze="recursive" role="menuitem">Recursive Division</button>
+                    <button type="button" data-maze="random-walls" role="menuitem">Random Walls</button>
+                    <button type="button" data-maze="random-weights" role="menuitem">Random Traffic</button>
+                    <button type="button" data-maze="staircase" role="menuitem">Staircase Pattern</button>
                 </div>
             </div>
 
-            <button id="btn-clear-path" class="btn btn-ghost" title="Clear Visualization">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M5 6v14a2 2 0 002 2h10a2 2 0 002-2V6"/></svg>
-                Clear Path
+            <button type="button" id="btn-clear-path" class="btn btn-ghost" title="Clear Visualization">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M5 6v14a2 2 0 002 2h10a2 2 0 002-2V6"/></svg>
+                <span class="btn-label">Clear Path</span>
             </button>
-            <button id="btn-reset" class="btn btn-ghost btn-danger" title="Reset Grid">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 003.2 7.2M2 12.5a10 10 0 0018.8 4.2"/></svg>
-                Reset
+            <button type="button" id="btn-reset" class="btn btn-ghost btn-danger" title="Reset Grid">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 003.2 7.2M2 12.5a10 10 0 0018.8 4.2"/></svg>
+                <span class="btn-label">Reset</span>
+            </button>
+            <button type="button" id="btn-help" class="btn btn-ghost btn-icon-only" title="How PathFinder works" aria-label="Open help">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
             </button>
         </div>
     </header>
 
     <!-- ===================== MAIN ===================== -->
     <main id="app-main">
+        <div id="sidebar-overlay" class="sidebar-overlay" hidden></div>
 
         <!-- SIDEBAR -->
-        <aside id="sidebar">
-            <!-- Tools Section -->
+        <aside id="sidebar" aria-label="Tools and algorithm details">
             <section class="sidebar-section">
                 <h3 class="section-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-                    Tools
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                    Draw tools
                 </h3>
-                <div class="tools-grid" id="tools-grid">
-                    <button class="tool-btn" data-tool="start" title="Place Start Point">
+                <p class="section-hint">Build a city block, then run a search.</p>
+                <div class="tools-grid" id="tools-grid" role="toolbar" aria-label="Grid drawing tools">
+                    <button type="button" class="tool-btn" data-tool="start" title="Place Start Point (1)">
                         <span class="tool-swatch start-swatch"></span>
-                        <span>Start</span>
+                        <span class="tool-copy">
+                            <span class="tool-name">Start</span>
+                            <kbd>1</kbd>
+                        </span>
                     </button>
-                    <button class="tool-btn" data-tool="end" title="Place End Point">
+                    <button type="button" class="tool-btn" data-tool="end" title="Place End Point (2)">
                         <span class="tool-swatch end-swatch"></span>
-                        <span>End</span>
+                        <span class="tool-copy">
+                            <span class="tool-name">End</span>
+                            <kbd>2</kbd>
+                        </span>
                     </button>
-                    <button class="tool-btn active" data-tool="wall" title="Draw Walls (Buildings)">
+                    <button type="button" class="tool-btn active" data-tool="wall" title="Draw Walls / Buildings (3)">
                         <span class="tool-swatch wall-swatch"></span>
-                        <span>Wall</span>
+                        <span class="tool-copy">
+                            <span class="tool-name">Wall</span>
+                            <kbd>3</kbd>
+                        </span>
                     </button>
-                    <button class="tool-btn" data-tool="weight" title="Add Traffic Weight">
+                    <button type="button" class="tool-btn" data-tool="weight" title="Add Traffic Weight (4)">
                         <span class="tool-swatch weight-swatch"></span>
-                        <span>Traffic</span>
+                        <span class="tool-copy">
+                            <span class="tool-name">Traffic</span>
+                            <kbd id="traffic-weight-label">5</kbd>
+                        </span>
                     </button>
-                    <button class="tool-btn" data-tool="waypoint" title="Place Waypoint">
+                    
+                    <div id="traffic-weight-popup" class="traffic-weight-popup hidden">
+                        <p>Select Traffic Weight</p>
+                        <button type="button" data-weight="3">Light (3)</button>
+                        <button type="button" data-weight="5">Medium (5)</button>
+                        <button type="button" data-weight="10">Heavy (10)</button>
+                    </div>
+
+                    <button type="button" class="tool-btn" data-tool="waypoint" title="Place Waypoint (5)">
                         <span class="tool-swatch waypoint-swatch"></span>
-                        <span>Waypoint</span>
+                        <span class="tool-copy">
+                            <span class="tool-name">Waypoint</span>
+                            <kbd>5</kbd>
+                        </span>
                     </button>
-                    <button class="tool-btn" data-tool="eraser" title="Erase">
+                    <button type="button" class="tool-btn" data-tool="eraser" title="Erase (6)">
                         <span class="tool-swatch eraser-swatch"></span>
-                        <span>Eraser</span>
+                        <span class="tool-copy">
+                            <span class="tool-name">Eraser</span>
+                            <kbd>6</kbd>
+                        </span>
                     </button>
                 </div>
             </section>
 
-            <!-- Algorithm Info -->
             <section class="sidebar-section">
                 <h3 class="section-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                    Algorithm Info
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    Algorithm
                 </h3>
                 <div id="algo-info" class="algo-info">
                     <p class="algo-name" id="algo-name">A* Search</p>
@@ -146,23 +184,22 @@
                 </div>
             </section>
 
-            <!-- Statistics -->
             <section class="sidebar-section">
                 <h3 class="section-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-                    Statistics
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    Run stats
                 </h3>
                 <div class="stats-grid" id="stats-grid">
                     <div class="stat-card">
-                        <span class="stat-label">Nodes Explored</span>
+                        <span class="stat-label">Nodes explored</span>
                         <span class="stat-value" id="stat-explored">—</span>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-label">Path Length</span>
+                        <span class="stat-label">Path length</span>
                         <span class="stat-value" id="stat-path-length">—</span>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-label">Path Cost</span>
+                        <span class="stat-label">Path cost</span>
                         <span class="stat-value" id="stat-path-cost">—</span>
                     </div>
                     <div class="stat-card">
@@ -172,60 +209,73 @@
                 </div>
             </section>
 
-            <!-- Legend -->
             <section class="sidebar-section">
                 <h3 class="section-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
                     Legend
                 </h3>
                 <div class="legend-list">
-                    <div class="legend-item"><span class="legend-swatch legend-start"></span>Start Point</div>
-                    <div class="legend-item"><span class="legend-swatch legend-end"></span>End Point</div>
-                    <div class="legend-item"><span class="legend-swatch legend-wall"></span>Wall / Building</div>
-                    <div class="legend-item"><span class="legend-swatch legend-weight-light"></span>Light Traffic (3×)</div>
-                    <div class="legend-item"><span class="legend-swatch legend-weight-mod"></span>Moderate Traffic (5×)</div>
-                    <div class="legend-item"><span class="legend-swatch legend-weight-heavy"></span>Heavy Traffic (10×)</div>
-                    <div class="legend-item"><span class="legend-swatch legend-waypoint"></span>Waypoint</div>
-                    <div class="legend-item"><span class="legend-swatch legend-visited"></span>Explored Node</div>
-                    <div class="legend-item"><span class="legend-swatch legend-path"></span>Shortest Path</div>
+                    <div class="legend-item"><span class="legend-swatch legend-start"></span>Start point</div>
+                    <div class="legend-item"><span class="legend-swatch legend-end"></span>End point</div>
+                    <div class="legend-item"><span class="legend-swatch legend-wall"></span>Wall / building</div>
+                    <div class="legend-item"><span class="legend-swatch legend-weight-light"></span>Light traffic (3×)</div>
+                    <div class="legend-item"><span class="legend-swatch legend-weight-mod"></span>Moderate traffic (5×)</div>
+                    <div class="legend-item"><span class="legend-swatch legend-weight-heavy"></span>Heavy traffic (10×)</div>
+                    <div class="legend-item"><span class="legend-swatch legend-waypoint"></span>Waypoint stop</div>
+                    <div class="legend-item"><span class="legend-swatch legend-visited"></span>Explored node</div>
+                    <div class="legend-item"><span class="legend-swatch legend-path"></span>Shortest path</div>
                 </div>
             </section>
         </aside>
 
         <!-- GRID AREA -->
         <div class="grid-wrapper" id="grid-wrapper">
+            <div class="canvas-chrome">
+                <div class="canvas-title">
+                    <span class="canvas-kicker">City grid</span>
+                    <h2>Route search canvas</h2>
+                </div>
+                <div class="canvas-status">
+                    <span id="run-status" class="status-pill" data-state="idle">Ready</span>
+                </div>
+            </div>
             <div class="grid-container" id="grid-container">
-                <div id="grid" class="grid"></div>
+                <div id="grid" class="grid" role="application" aria-label="Pathfinding grid"></div>
             </div>
             <div class="grid-instructions" id="grid-instructions">
                 <span>Click &amp; drag to draw walls</span>
                 <span class="separator">•</span>
                 <span>Right-click for traffic weights</span>
                 <span class="separator">•</span>
-                <span>Use sidebar tools to switch modes</span>
+                <span>Drag start / end to move them</span>
+                <span class="separator hide-sm">•</span>
+                <span class="hide-sm">Press <kbd>V</kbd> to visualize</span>
             </div>
         </div>
     </main>
 
     <!-- ===================== COMPARISON PANEL ===================== -->
-    <div id="comparison-panel" class="comparison-panel hidden">
+    <div id="comparison-panel" class="bottom-panel comparison-panel hidden" role="region" aria-label="Algorithm comparison">
         <div class="comparison-header">
-            <h3>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-                Algorithm Comparison
-            </h3>
-            <button id="btn-close-comparison" class="btn-icon" title="Close">
+            <div>
+                <h3>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    Algorithm comparison
+                </h3>
+                <p class="panel-subtitle">Same grid, same start and end. Best values are highlighted.</p>
+            </div>
+            <button type="button" id="btn-close-comparison" class="btn-icon" title="Close" aria-label="Close comparison">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
         </div>
-        <div class="comparison-body">
+        <div class="comparison-body table-scroll">
             <table id="comparison-table">
                 <thead>
                     <tr>
                         <th>Algorithm</th>
-                        <th>Nodes Explored</th>
-                        <th>Path Length</th>
-                        <th>Path Cost</th>
+                        <th>Nodes explored</th>
+                        <th>Path length</th>
+                        <th>Path cost</th>
                         <th>Time (ms)</th>
                         <th>Status</th>
                     </tr>
@@ -236,30 +286,64 @@
     </div>
 
     <!-- ===================== ROUTING MATRIX PANEL ===================== -->
-    <div id="routing-panel" class="routing-panel hidden">
+    <div id="routing-panel" class="bottom-panel routing-panel hidden" role="region" aria-label="Routing matrix">
         <div class="routing-header">
-            <h3>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                Routing Matrix
-            </h3>
+            <div>
+                <h3>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Routing matrix
+                </h3>
+                <p class="panel-subtitle">Shortest-path costs between waypoints, then a nearest-neighbor tour.</p>
+            </div>
             <div class="routing-actions">
-                <button id="btn-compute-matrix" class="btn btn-primary btn-sm">Compute Matrix</button>
-                <button id="btn-find-tour" class="btn btn-secondary btn-sm" disabled>Find Optimal Tour</button>
-                <button id="btn-close-routing" class="btn-icon" title="Close">
+                <button type="button" id="btn-compute-matrix" class="btn btn-primary btn-sm">Compute Matrix</button>
+                <button type="button" id="btn-find-tour" class="btn btn-secondary btn-sm" disabled>Find Optimal Tour</button>
+                <button type="button" id="btn-close-routing" class="btn-icon" title="Close" aria-label="Close routing matrix">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
             </div>
         </div>
         <div class="routing-body">
             <div id="matrix-container" class="matrix-container">
-                <p class="matrix-placeholder">Place at least 2 waypoints on the grid, then click <strong>Compute Matrix</strong>.</p>
+                <div class="empty-state">
+                    <p class="matrix-placeholder">Place at least 2 waypoints on the grid, then click <strong>Compute Matrix</strong>.</p>
+                </div>
             </div>
             <div id="tour-result" class="tour-result hidden"></div>
         </div>
     </div>
 
+    <!-- ===================== HELP MODAL ===================== -->
+    <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="help-title" aria-hidden="true">
+        <div class="modal-backdrop" data-close-help></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="help-title">How PathFinder works</h2>
+                <button type="button" id="btn-close-help" class="btn-icon" aria-label="Close help">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>The grid is a city map. Green is the origin, red is the destination, grey cells are buildings, and amber/orange cells are congested roads that cost more to traverse.</p>
+                <ol class="help-steps">
+                    <li>Draw walls and optional traffic weights.</li>
+                    <li>Choose an algorithm and press <strong>Visualize</strong>.</li>
+                    <li>Use <strong>Compare All</strong> to see which search explores fewer nodes.</li>
+                    <li>Drop two or more waypoints to open the routing matrix and compute a delivery-style tour.</li>
+                </ol>
+                <h3>Shortcuts</h3>
+                <ul class="shortcut-list">
+                    <li><kbd>V</kbd> / <kbd>Enter</kbd> Visualize</li>
+                    <li><kbd>C</kbd> Clear path</li>
+                    <li><kbd>R</kbd> Reset grid</li>
+                    <li><kbd>1</kbd>–<kbd>6</kbd> Switch tools</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== TOAST ===================== -->
-    <div id="toast-container" class="toast-container"></div>
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
     <script src="js/algorithms.js"></script>
     <script src="js/app.js"></script>

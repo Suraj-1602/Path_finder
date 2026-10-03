@@ -67,6 +67,36 @@ const btnFindTour = document.getElementById('btn-find-tour');
 const btnCloseRouting = document.getElementById('btn-close-routing');
 
 const toastContainer = document.getElementById('toast-container');
+const btnSidebar = document.getElementById('btn-sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+const btnHelp = document.getElementById('btn-help');
+const helpModal = document.getElementById('help-modal');
+const btnCloseHelp = document.getElementById('btn-close-help');
+const runStatus = document.getElementById('run-status');
+const visualizeLabel = btnVisualize ? btnVisualize.querySelector('.btn-label') : null;
+
+const trafficButton = document.querySelector('[data-tool="weight"]');
+const trafficPopup = document.getElementById('traffic-weight-popup');
+
+trafficButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    trafficPopup.classList.toggle('hidden');
+});
+
+trafficPopup.querySelectorAll('[data-weight]').forEach(button => {
+    button.addEventListener('click', (event) => {
+        event.stopPropagation();
+
+        selectedWeight = Number(button.dataset.weight);
+        
+        document.getElementById("traffic-weight-label").textContent = selectedWeight;
+        
+        document.getElementById("traffic-weight-popup").classList.add("hidden");
+        trafficPopup.classList.add('hidden');
+    });
+});
+
+let mouseUpBound = false;
 
 // ============================================
 // INITIALIZATION
@@ -116,7 +146,29 @@ function createGrid() {
         grid.push(row);
     }
 
-    document.addEventListener('mouseup', handleMouseUp);
+    if (!mouseUpBound) {
+        document.addEventListener('mouseup', handleMouseUp);
+        mouseUpBound = true;
+    }
+}
+
+function setRunStatus(state, label) {
+    if (!runStatus) return;
+    runStatus.dataset.state = state;
+    runStatus.textContent = label;
+}
+
+function setRunningUi(running) {
+    isRunning = running;
+    document.body.classList.toggle('is-running', running);
+    btnVisualize.disabled = running;
+    btnCompare.disabled = running;
+    if (visualizeLabel) {
+        visualizeLabel.textContent = running ? 'Searching' : 'Visualize';
+    }
+    if (running) {
+        setRunStatus('running', 'Searching…');
+    }
 }
 
 function createNode(row, col) {
@@ -200,22 +252,26 @@ function setWall(row, col) {
     node.element.classList.add('cell-wall');
 }
 
+
+let selectedWeight = 5;
+
 function cycleWeight(row, col) {
     const node = grid[row][col];
-    if (node.isStart || node.isEnd || node.isWall || node.isWaypoint) return;
+
+    if (node.isStart || node.isEnd || node.isWall || node.isWaypoint) {
+        return;
+    }
 
     clearNodeWeight(node);
 
-    const currentIdx = WEIGHT_CYCLE.indexOf(node.weight);
-    const nextIdx = (currentIdx + 1) % (WEIGHT_CYCLE.length + 1);
-
-    if (nextIdx === WEIGHT_CYCLE.length) {
-        node.weight = 1; // Reset to normal
+    if (selectedWeight === 1) {
+        node.weight = 1;
     } else {
-        node.weight = WEIGHT_CYCLE[nextIdx];
+        node.weight = selectedWeight;
         node.element.classList.add(`cell-weight-${node.weight}`);
     }
 }
+
 
 function placeWaypoint(row, col) {
     const node = grid[row][col];
@@ -371,7 +427,8 @@ function clearVisualization() {
     // Cancel pending animations
     for (const t of animationTimeouts) clearTimeout(t);
     animationTimeouts = [];
-    isRunning = false;
+    setRunningUi(false);
+    setRunStatus('idle', 'Ready');
 
     // Remove visualization classes from all cells
     for (const row of grid) {
@@ -418,10 +475,7 @@ function visualize() {
     if (!result) return;
 
     const delay = getAnimationDelay();
-    isRunning = true;
-
-    btnVisualize.disabled = true;
-    btnCompare.disabled = true;
+    setRunningUi(true);
 
     // Animate visited nodes
     const { visitedNodesInOrder, visitedNodesReverse, path, stats } = result;
@@ -453,33 +507,50 @@ function visualize() {
     );
 
     // Animate path
+    
+    // Animate path
     if (path.length > 0) {
         for (let i = 0; i < path.length; i++) {
             animationTimeouts.push(setTimeout(() => {
                 const node = path[i];
+
                 if (!node.isStart && !node.isEnd) {
                     node.element.classList.add('cell-path');
                 }
+
+                // Finish only after the last path cell is animated
                 if (i === path.length - 1) {
-                    isRunning = false;
-                    btnVisualize.disabled = false;
-                    btnCompare.disabled = false;
+                    updateStats(stats);
+
+                    // isRunning = false;
+                    // btnVisualize.disabled = false;
+                    // btnCompare.disabled = false;
+                    setRunningUi(false);
+                    setRunStatus('found', 'Path Found');
                 }
             }, totalVisitedTime + 40 * i));
         }
     } else {
         animationTimeouts.push(setTimeout(() => {
+            updateStats(stats);
+    
             isRunning = false;
             btnVisualize.disabled = false;
             btnCompare.disabled = false;
+    
             if (!stats.found) {
-                showToast('No path found! The end node is unreachable.', 'error');
+                showToast(
+                    'No path found! The end node is unreachable.',
+                    'error'
+                );
+            }else {
+                setRunStatus('found', 'Path Found');
             }
         }, totalVisitedTime));
     }
 
     // Update stats
-    updateStats(stats);
+    // updateStats(stats);
 }
 
 function compareAll() {
@@ -526,6 +597,7 @@ function compareAll() {
     }
 
     comparisonPanel.classList.remove('hidden');
+    setRunStatus('idle', 'Compared');
 
     // Restore start/end visuals (algorithms can mess them up)
     startNode.element.classList.add('cell-start');
@@ -556,7 +628,7 @@ function resetGrid() {
     if (isRunning) {
         for (const t of animationTimeouts) clearTimeout(t);
         animationTimeouts = [];
-        isRunning = false;
+        setRunningUi(false);
     }
 
     waypoints = [];
@@ -567,8 +639,8 @@ function resetGrid() {
     createGrid();
     setDefaultPositions();
     resetStats();
-    btnVisualize.disabled = false;
-    btnCompare.disabled = false;
+    setRunningUi(false);
+    setRunStatus('idle', 'Ready');
 
     showToast('Grid reset!', 'success');
 }
@@ -862,6 +934,7 @@ function findOptimalTour() {
         }
     }
 
+    setRunStatus('found', 'Tour ready');
     showToast('Optimal tour visualized!', 'success');
 }
 
@@ -883,6 +956,18 @@ function showToast(message, type = 'info') {
 // ============================================
 // EVENT LISTENERS
 // ============================================
+function setSidebarOpen(open) {
+    document.body.classList.toggle('sidebar-open', open);
+    if (btnSidebar) btnSidebar.setAttribute('aria-expanded', String(open));
+    if (sidebarOverlay) sidebarOverlay.hidden = !open;
+}
+
+function setHelpOpen(open) {
+    if (!helpModal) return;
+    helpModal.classList.toggle('hidden', !open);
+    helpModal.setAttribute('aria-hidden', String(!open));
+}
+
 function setupEventListeners() {
     // Visualize button
     btnVisualize.addEventListener('click', visualize);
@@ -906,17 +991,23 @@ function setupEventListeners() {
             toolBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentTool = btn.dataset.tool;
+            if (window.matchMedia('(max-width: 980px)').matches) {
+                setSidebarOpen(false);
+            }
         });
     });
 
     // Maze dropdown
     btnMaze.addEventListener('click', (e) => {
         e.stopPropagation();
+        const willOpen = mazeDropdown.classList.contains('hidden');
         mazeDropdown.classList.toggle('hidden');
+        btnMaze.setAttribute('aria-expanded', String(willOpen));
     });
 
     document.addEventListener('click', () => {
         mazeDropdown.classList.add('hidden');
+        btnMaze.setAttribute('aria-expanded', 'false');
     });
 
     mazeDropdown.querySelectorAll('button').forEach(btn => {
@@ -924,8 +1015,26 @@ function setupEventListeners() {
             e.stopPropagation();
             generateMaze(btn.dataset.maze);
             mazeDropdown.classList.add('hidden');
+            btnMaze.setAttribute('aria-expanded', 'false');
         });
     });
+
+    if (btnSidebar) {
+        btnSidebar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setSidebarOpen(!document.body.classList.contains('sidebar-open'));
+        });
+    }
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => setSidebarOpen(false));
+    }
+    if (btnHelp) btnHelp.addEventListener('click', () => setHelpOpen(true));
+    if (btnCloseHelp) btnCloseHelp.addEventListener('click', () => setHelpOpen(false));
+    if (helpModal) {
+        helpModal.querySelectorAll('[data-close-help]').forEach((el) => {
+            el.addEventListener('click', () => setHelpOpen(false));
+        });
+    }
 
     // Close comparison panel
     btnCloseComparison.addEventListener('click', () => {
@@ -941,7 +1050,15 @@ function setupEventListeners() {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            setHelpOpen(false);
+            setSidebarOpen(false);
+            mazeDropdown.classList.add('hidden');
+            btnMaze.setAttribute('aria-expanded', 'false');
+        }
+
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        if (helpModal && !helpModal.classList.contains('hidden')) return;
 
         switch (e.key.toLowerCase()) {
             case 'v': case 'enter':
