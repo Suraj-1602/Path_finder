@@ -469,10 +469,67 @@ function visualize() {
     clearVisualization();
     comparisonPanel.classList.add('hidden');
 
+    
     const algoKey = algorithmSelect.value;
-    const result = runAlgorithmByKey(algoKey);
+    let result;
+
+    if (waypoints.length > 0) {
+        // Route in order: Start -> A -> B -> C -> End
+        const checkpoints = [startNode, ...waypoints, endNode];
+
+        const combinedPath = [];
+        const combinedVisited = [];
+        let totalCost = 0;
+        let totalTime = 0;
+        let found = true;
+
+        for (let i = 0; i < checkpoints.length - 1; i++) {
+            const segment = runAlgorithmByKey(
+                algoKey,
+                checkpoints[i],
+                checkpoints[i + 1]
+            );
+
+            if (!segment || !segment.stats.found) {
+                found = false;
+                break;
+            }
+
+            combinedVisited.push(...segment.visitedNodesInOrder);
+            totalCost += segment.stats.pathCost;
+            totalTime += segment.stats.time;
+
+            // Avoid duplicating the connecting checkpoint
+            if (i === 0) {
+                combinedPath.push(...segment.path);
+            } else {
+                combinedPath.push(...segment.path.slice(1));
+            }
+        }
+
+        if (!found) {
+            showToast('No complete route through all waypoints exists!', 'error');
+            return;
+        }
+
+        result = {
+            visitedNodesInOrder: combinedVisited,
+            visitedNodesReverse: [],
+            path: combinedPath,
+            stats: {
+                found: true,
+                pathCost: totalCost,
+                pathLength: Math.max(0, combinedPath.length - 1),
+                explored: combinedVisited.length,
+                time: totalTime
+            }
+        };
+    } else {
+        result = runAlgorithmByKey(algoKey);
+    }
 
     if (!result) return;
+
 
     const delay = getAnimationDelay();
     setRunningUi(true);
