@@ -102,37 +102,30 @@ Math_project_2/
 2. Click **Compute Matrix** to build a cost matrix between all waypoints
 3. Click **Find Optimal Tour** to get a nearest-neighbor TSP route and visualize it on the grid
 
-##Architecture
-                 PathFinder
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-       Frontend              Algorithms
-          │                     │
-     HTML + CSS             algorithms.js
-          │                     │
-          └──────────┬──────────┘
-                     │
-                   app.js
-                     │
-       ┌─────────────┼──────────────┐
-       │             │              │
-    Grid State    User Events   Visualization
-       │             │              │
-       └─────────────┼──────────────┘
-                     │
-                 Algorithms
-                     │
-       ┌─────────────┼─────────────┐
-       │             │             │
-    Dijkstra        A*            BFS
-       │             │             │
-    Greedy      Bidirectional     TSP
-                     │
-                     ↓
-               Result + Stats
-                     ↓
-                Visualization
+
+## Architecture: PathFinder
+
+```mermaid
+flowchart TD
+    A["Frontend<br/>HTML + CSS + JavaScript"] --> B["app.js"]
+    B --> C["Grid State"]
+    B --> D["User Events"]
+    B --> E["Visualization"]
+    B --> F["Algorithms"]
+
+    F --> G["Dijkstra"]
+    F --> H["A*"]
+    F --> I["BFS"]
+    F --> J["Greedy Bidirectional TSP"]
+
+    C --> K["Results + Statistics"]
+    G --> K
+    H --> K
+    I --> K
+    J --> K
+    K --> L["Path Visualization"]
+```
+
 ## Tech Stack
 
 - Vanilla HTML, CSS, and JavaScript
