@@ -587,25 +587,30 @@ function visualize() {
                 }
             }, totalVisitedTime + 40 * i));
         }
-    } else {
+    }
+    else {
         animationTimeouts.push(setTimeout(() => {
             updateStats(stats);
-    
+
             isRunning = false;
             btnVisualize.disabled = false;
             btnCompare.disabled = false;
-    
+
             if (!stats.found) {
+                setRunStatus('error', 'No Path Found');
+
+                btnVisualize.disabled = false;
+                btnVisualize.innerHTML = '<span>▶</span> Visualize';
+
                 showToast(
                     'No path found! The end node is unreachable.',
                     'error'
                 );
-            }else {
-                setRunStatus('found', 'Path Found');
+            } else {
+            setRunStatus('found', 'Path Found');
             }
         }, totalVisitedTime));
     }
-
     // Update stats
     // updateStats(stats);
 }
